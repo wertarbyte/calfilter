@@ -20,6 +20,7 @@ if ($ocal) {
 
     # create new calendar
     my $ncal = new Data::ICal();
+    $ncal->add_property( 'PRODID', 'calfilter.pl' );
     
     for my $e (@{$ocal->entries}) {
         if ($e->property('SUMMARY')->[0]->as_string =~ $regex) {
