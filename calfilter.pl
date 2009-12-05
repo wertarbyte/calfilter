@@ -13,16 +13,20 @@ my $regex = ($q->param("regex") || '');
 
 my $data = get($url);
 
-my $cal = Data::ICal->new(data => $data);
+my $ocal = Data::ICal->new(data => $data);
 
-if ($cal) {
+if ($ocal) {
     print $q->header("text/calendar");
 
-    for my $e (@{$cal->entries}) {
+    # create new calendar
+    my $ncal = new Data::ICal();
+    
+    for my $e (@{$ocal->entries}) {
         if ($e->property('SUMMARY')->[0]->as_string =~ $regex) {
-            print $e->as_string;
+            $ncal->add_entry($e);
         }
     }
+    print $ncal->as_string;
 } else {
     print $q->header("text/plain");
 
