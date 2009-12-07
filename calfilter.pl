@@ -2,6 +2,7 @@
 #
 # calfilter.pl by Stefan Tomanek <stefan.tomanek@wertarbyte.de>
 
+use utf8;
 use CGI;
 use Data::ICal;
 use LWP::Simple;
@@ -17,7 +18,7 @@ my $data = get($url);
 my $ocal = Data::ICal->new(data => $data);
 
 if ($ocal) {
-    print $q->header("text/calendar");
+    print $q->header(-type => "text/calendar", -charset => 'utf-8');
 
     # create new calendar
     my $ncal = new Data::ICal();
