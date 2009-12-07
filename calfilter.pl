@@ -10,6 +10,7 @@ my $q = new CGI();
 
 my $url = $q->param("url");
 my $regex = ($q->param("regex") || '');
+my $name = ($q->param("name") || '');
 
 my $data = get($url);
 
@@ -21,6 +22,7 @@ if ($ocal) {
     # create new calendar
     my $ncal = new Data::ICal();
     $ncal->add_property( 'PRODID', 'calfilter.pl' );
+    $ncal->add_property( 'X-WR-CALDESC', $name );
     
     for my $e (@{$ocal->entries}) {
         if ($e->property('SUMMARY')->[0]->as_string =~ $regex) {
