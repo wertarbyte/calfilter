@@ -2,38 +2,46 @@
 #
 # calfilter.pl by Stefan Tomanek <stefan.tomanek@wertarbyte.de>
 
+use strict;
 use utf8;
 use CGI;
 use Data::ICal;
 use LWP::Simple;
 use DateTime;
+use DateTime::TimeZone;
 
 my $q = new CGI();
 
 my $url = $q->param("url");
 my $regex = ($q->param("regex") || '');
 my $name = ($q->param("name") || '');
-my $tzoffset = 0;
-if (defined $q->param("tzoffset") && $q->param("tzoffset") =~ /^[+-]?[0-9]+$/) {
-    $tzoffset += $q->param("tzoffset");
+my $tz = undef;
+
+if (defined $q->param("tz")) {
+    $tz = DateTime::TimeZone->new( name => $q->param("tz") );
 }
 
 sub add_offset {
-    my ($timestring, $offset) = @_;
+    my ($timestring) = @_;
     if ($timestring =~ /^([0-9]{4})([0-9]{2})([0-9]{2})T([0-9]{2})([0-9]{2})([0-9]{2})$/) {
         my $dt = DateTime->new( year => $1, month => $2, day => $3, hour => $4, minute => $5, second => $6 );
-        $dt = $dt->add( minutes => $offset );
 
-        return $dt->strftime('%Y%m%dT%H%M%S');
+        my $offset = $tz->offset_for_datetime( $dt );
+
+        $dt = $dt->subtract( seconds => $offset );
+
+        return $dt->strftime('%Y%m%dT%H%M%SZ');
     }
     return $timestring;
 }
 
 sub change_tz_entry {
-    my ($e, $key, $offset) = @_;
-    my $p = $e->property($key)->[0];
-    my $new = add_offset($p->decoded_value(), $tzoffset);
-    $p->value($new);
+    my ($e, $key) = @_;
+    return unless $e->property($key);
+    for (@{ $e->property($key) }) {
+        my $new = add_offset($_->decoded_value());
+        $_->value($new);
+    }
 }
 
 my $data = get($url);
@@ -50,8 +58,10 @@ if ($ocal) {
     
     for my $e (@{$ocal->entries}) {
         if ($e->property('SUMMARY')->[0]->as_string =~ $regex) {
-            change_tz_entry( $e, "DTSTART", $tzoffset);
-            change_tz_entry( $e, "DTEND", $tzoffset);
+            if ($tz) {
+                change_tz_entry( $e, "DTSTART");
+                change_tz_entry( $e, "DTEND");
+            }
             
             $ncal->add_entry($e);
         }
