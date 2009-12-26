@@ -17,7 +17,7 @@ my $regex = ($q->param("regex") || '');
 my $name = ($q->param("name") || '');
 my $tz = undef;
 
-if (defined $q->param("tz")) {
+if (defined $q->param("tz") && DateTime::TimeZone->is_valid_name( $q->param("tz") )) {
     $tz = DateTime::TimeZone->new( name => $q->param("tz") );
 }
 
