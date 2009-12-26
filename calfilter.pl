@@ -49,6 +49,8 @@ sub change_tz_entry {
 if ($url_only) {
     print $q->header("text/plain");
     $q->delete('url_only');
+    $q->delete('regex') unless defined $regex;
+    $q->delete('tz') unless defined $tz;
     print $q->self_url();
 } else {
     my $data = get($url);
