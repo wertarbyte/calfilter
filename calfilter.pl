@@ -21,6 +21,8 @@ if (defined $q->param("tz")) {
     $tz = DateTime::TimeZone->new( name => $q->param("tz") );
 }
 
+my $url_only = $q->param("url_only");
+
 sub add_offset {
     my ($timestring) = @_;
     if ($timestring =~ /^([0-9]{4})([0-9]{2})([0-9]{2})T([0-9]{2})([0-9]{2})([0-9]{2})$/) {
@@ -44,31 +46,37 @@ sub change_tz_entry {
     }
 }
 
-my $data = get($url);
-
-my $ocal = Data::ICal->new(data => $data);
-
-if ($ocal) {
-    print $q->header(-type => "text/calendar", -charset => 'utf-8');
-
-    # create new calendar
-    my $ncal = new Data::ICal();
-    $ncal->add_property( 'PRODID', 'calfilter.pl' );
-    $ncal->add_property( 'X-WR-CALDESC', $name );
-    
-    for my $e (@{$ocal->entries}) {
-        if ($e->property('SUMMARY')->[0]->as_string =~ $regex) {
-            if ($tz) {
-                change_tz_entry( $e, "DTSTART");
-                change_tz_entry( $e, "DTEND");
-            }
-            
-            $ncal->add_entry($e);
-        }
-    }
-    print $ncal->as_string;
-} else {
+if ($url_only) {
     print $q->header("text/plain");
+    $q->delete('url_only');
+    print $q->self_url();
+} else {
+    my $data = get($url);
 
-    print "Invalid calendar URL or data!\n";
+    my $ocal = Data::ICal->new(data => $data);
+
+    if ($ocal) {
+        print $q->header(-type => "text/calendar", -charset => 'utf-8');
+
+        # create new calendar
+        my $ncal = new Data::ICal();
+        $ncal->add_property( 'PRODID', 'calfilter.pl' );
+        $ncal->add_property( 'X-WR-CALDESC', $name );
+        
+        for my $e (@{$ocal->entries}) {
+            if ($e->property('SUMMARY')->[0]->as_string =~ $regex) {
+                if ($tz) {
+                    change_tz_entry( $e, "DTSTART");
+                    change_tz_entry( $e, "DTEND");
+                }
+                
+                $ncal->add_entry($e);
+            }
+        }
+        print $ncal->as_string;
+    } else {
+        print $q->header("text/plain");
+
+        print "Invalid calendar URL or data!\n";
+    }
 }
