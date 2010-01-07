@@ -69,6 +69,7 @@ if ($url_only) {
             if ($e->property('SUMMARY')->[0]->as_string =~ $regex) {
                 if ($tz) {
                     change_tz_entry( $e, "DTSTART");
+                    change_tz_entry( $e, "DTSTAMP");
                     change_tz_entry( $e, "DTEND");
                 }
                 
