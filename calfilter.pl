@@ -10,6 +10,9 @@ use LWP::Simple;
 use DateTime;
 use DateTime::TimeZone;
 
+# these entries are rewritten to UTC time if a time zone is defined
+use constant TZ_DEPENDENT_ENTRIES => qw(DTSTART DTEND DTSTAMP);
+
 my $q = new CGI();
 
 my $url = $q->param("url");
@@ -70,9 +73,9 @@ if ($url_only) {
         for my $e (@{$ocal->entries}) {
             if ($e->property('SUMMARY')->[0]->as_string =~ $regex) {
                 if ($tz) {
-                    change_tz_entry( $e, "DTSTART");
-                    change_tz_entry( $e, "DTSTAMP");
-                    change_tz_entry( $e, "DTEND");
+                    for (TZ_DEPENDENT_ENTRIES) {
+                        change_tz_entry( $e, $_ );
+                    }
                 }
                 
                 $ncal->add_entry($e);
