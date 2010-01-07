@@ -23,7 +23,7 @@ if (defined $q->param("tz") && DateTime::TimeZone->is_valid_name( $q->param("tz"
 
 my $url_only = $q->param("url_only");
 
-sub add_offset {
+sub local_to_utc {
     my ($timestring) = @_;
     if ($timestring =~ /^([0-9]{4})([0-9]{2})([0-9]{2})T([0-9]{2})([0-9]{2})([0-9]{2})$/) {
         my $dt = DateTime->new( year => $1, month => $2, day => $3, hour => $4, minute => $5, second => $6 );
@@ -41,7 +41,7 @@ sub change_tz_entry {
     my ($e, $key) = @_;
     return unless $e->property($key);
     for (@{ $e->property($key) }) {
-        my $new = add_offset($_->decoded_value());
+        my $new = local_to_utc($_->decoded_value());
         $_->value($new);
     }
 }
